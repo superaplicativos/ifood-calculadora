@@ -64,6 +64,21 @@
       overflow:auto;
       backdrop-filter:saturate(120%) blur(6px);
     }
+    .logo{
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      margin:2px 0 8px;
+    }
+    .logo img{
+      width: clamp(72px, 26vw, 120px);
+      height:auto;
+      border-radius:12px;
+      display:block;
+      user-select:none;
+      -webkit-user-drag:none;
+      box-shadow:0 6px 20px rgba(0,0,0,.35);
+    }
     h1{
       font-size:clamp(18px,4.6vw,24px);
       margin:2px 0 10px;
@@ -254,6 +269,7 @@
       .subtitle{margin-bottom:8px}
       .card{padding:12px}
       form{gap:10px}
+      .logo img{width: clamp(58px, 22vw, 90px)}
     }
     @media (min-width:740px){
       .wrap{padding:24px}
@@ -278,6 +294,9 @@
   </script>
   <div class="wrap">
     <div class="card">
+      <div class="logo">
+        <img src="./LOGO.png" alt="Calculadora de Ganhos">
+      </div>
       <h1>Calculadora de Lucro por Corrida</h1>
       <div class="subtitle">Mobile‑first. Rápida. Sem cadastro.</div>
       <form id="form" novalidate>
