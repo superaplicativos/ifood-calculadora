@@ -1,0 +1,481 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#0f172a">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <title>Calculadora de Lucro por Corrida</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 128 128'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop stop-color='%233b82f6'/%3E%3Cstop offset='1' stop-color='%232563eb'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='128' height='128' rx='24' fill='%230f172a'/%3E%3Ccircle cx='64' cy='64' r='44' fill='url(%23g)'/%3E%3Ctext x='64' y='78' font-family='Segoe UI,Arial' font-size='64' text-anchor='middle' fill='white'%3E%24%3C/text%3E%3C/svg%3E">
+  <style>
+    :root{
+      --bg:#0f172a;
+      --card:#1e293b;
+      --text:#e2e8f0;
+      --muted:#94a3b8;
+      --blue:#3b82f6;
+      --blue-pressed:#2563eb;
+      --green:#22c55e;
+      --green-soft:#86efac;
+      --yellow:#facc15;
+      --red:#ef4444;
+      --shadow:0 10px 30px rgba(0,0,0,.35);
+      --radius:16px;
+      --radius-sm:12px;
+      --gap:14px;
+      --gap-lg:18px;
+      --maxw:520px;
+      --trans:180ms ease;
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans, Helvetica Neue, Arial, "Apple Color Emoji","Segoe UI Emoji";
+      background:linear-gradient(180deg,#0f172a 0%, #0b1223 100%);
+      color:var(--text);
+      -webkit-font-smoothing:antialiased;
+      -moz-osx-font-smoothing:grayscale;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding:24px;
+    }
+    .wrap{
+      width:100%;
+      max-width:var(--maxw);
+    }
+    .card{
+      background:var(--card);
+      border-radius:var(--radius);
+      box-shadow:var(--shadow);
+      padding:24px;
+      backdrop-filter:saturate(120%) blur(6px);
+    }
+    h1{
+      font-size:clamp(20px,4.8vw,26px);
+      margin:0 0 14px;
+      line-height:1.2;
+      text-align:center;
+    }
+    .subtitle{
+      text-align:center;
+      color:var(--muted);
+      font-size:14px;
+      margin-bottom:18px;
+    }
+    form{
+      display:grid;
+      gap:var(--gap);
+    }
+    .field{
+      display:flex;
+      flex-direction:column;
+      gap:8px;
+    }
+    label{
+      font-size:14px;
+      color:var(--muted);
+    }
+    input[type="text"]{
+      appearance:none;
+      width:100%;
+      background:#0b162d;
+      color:var(--text);
+      border:1px solid rgba(148,163,184,.2);
+      border-radius:var(--radius-sm);
+      padding:14px 14px;
+      font-size:16px;
+      outline:none;
+      transition:border-color var(--trans), box-shadow var(--trans), background-color var(--trans);
+    }
+    input[type="text"]:focus{
+      border-color:var(--blue);
+      box-shadow:0 0 0 3px rgba(59,130,246,.25);
+      background:#0a1530;
+    }
+    .help{
+      margin-top:-2px;
+      font-size:12px;
+      color:var(--muted);
+    }
+    .row{
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      gap:var(--gap);
+    }
+    .actions{
+      display:flex;
+      gap:var(--gap);
+      margin-top:var(--gap-lg);
+    }
+    .btn{
+      flex:1;
+      border:none;
+      border-radius:var(--radius-sm);
+      padding:14px 16px;
+      font-weight:600;
+      font-size:16px;
+      letter-spacing:.2px;
+      cursor:pointer;
+      transition:transform 80ms ease, background-color var(--trans), opacity var(--trans);
+      user-select:none;
+      will-change:transform;
+    }
+    .btn:active{transform:scale(.98)}
+    .btn-primary{
+      background:linear-gradient(180deg,var(--blue) 0%, var(--blue-pressed) 100%);
+      color:#fff;
+      box-shadow:0 8px 24px rgba(59,130,246,.35);
+    }
+    .btn-secondary{
+      background:#0b162d;
+      color:var(--text);
+      border:1px solid rgba(148,163,184,.25);
+    }
+    .result{
+      margin-top:22px;
+      opacity:0;
+      transform:translateY(8px);
+      transition:opacity 220ms ease, transform 220ms ease;
+      display:none;
+    }
+    .result.show{
+      display:block;
+      opacity:1;
+      transform:translateY(0);
+    }
+    .result-header{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      margin-bottom:10px;
+    }
+    .badge{
+      font-weight:700;
+      font-size:13px;
+      padding:6px 10px;
+      border-radius:999px;
+      background:#0b162d;
+      color:var(--text);
+      border:1px solid rgba(148,163,184,.25);
+    }
+    .badge.ok{background:rgba(34,197,94,.18); color:#d1fae5; border-color:rgba(16,185,129,.35)}
+    .badge.good{background:rgba(134,239,172,.18); color:#dcfce7; border-color:rgba(74,222,128,.35)}
+    .badge.warn{background:rgba(250,204,21,.18); color:#fef9c3; border-color:rgba(250,204,21,.35)}
+    .badge.bad{background:rgba(239,68,68,.18); color:#fee2e2; border-color:rgba(239,68,68,.35)}
+    .big{
+      font-size:clamp(22px,6.2vw,30px);
+      font-weight:800;
+      letter-spacing:.2px;
+    }
+    .grid{
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      gap:var(--gap);
+      margin-top:14px;
+    }
+    .metric{
+      background:#0b162d;
+      border:1px solid rgba(148,163,184,.2);
+      border-radius:var(--radius-sm);
+      padding:12px;
+    }
+    .metric .label{
+      font-size:12px;
+      color:var(--muted);
+      margin-bottom:6px;
+    }
+    .metric .value{
+      font-weight:700;
+      font-size:16px;
+    }
+    .value.pos{color:var(--green)}
+    .value.neg{color:var(--red)}
+    .value.neu{color:var(--text)}
+    .alerts{
+      margin-top:14px;
+      display:grid;
+      gap:8px;
+    }
+    .share{
+      margin-top:14px;
+      display:flex;
+      gap:var(--gap);
+    }
+    .btn-tertiary{
+      background:transparent;
+      color:var(--text);
+      border:1px solid rgba(148,163,184,.25);
+    }
+    .btn[disabled]{
+      opacity:.6;
+      cursor:not-allowed;
+    }
+    .alert{
+      display:flex;
+      align-items:center;
+      gap:10px;
+      font-size:13px;
+      color:var(--muted);
+      background:#0b162d;
+      border:1px dashed rgba(148,163,184,.25);
+      border-radius:var(--radius-sm);
+      padding:10px 12px;
+    }
+    .alert strong{color:#fff}
+    .err{
+      display:none;
+      color:#fca5a5;
+      font-size:12px;
+      margin-top:6px;
+    }
+    .err.show{display:block}
+    @media (hover:hover){
+      .btn-primary:hover{filter:brightness(1.06)}
+      .btn-secondary:hover{opacity:.9}
+    }
+    @media (min-width:740px){
+      body{padding:48px}
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="card">
+      <h1>Calculadora de Lucro por Corrida</h1>
+      <div class="subtitle">Mobile‑first. Rápida. Sem cadastro.</div>
+      <form id="form" novalidate>
+        <div class="field">
+          <label for="valor">Valor da corrida (R$)</label>
+          <input id="valor" type="text" inputmode="decimal" placeholder="Ex: 35,90" autocomplete="off" aria-label="Valor da corrida em reais">
+          <div class="err" id="valorErr"></div>
+        </div>
+        <div class="row">
+          <div class="field">
+            <label for="km">KM rodado</label>
+            <input id="km" type="text" inputmode="decimal" placeholder="Ex: 18,5" autocomplete="off">
+            <div class="err" id="kmErr"></div>
+          </div>
+          <div class="field">
+            <label for="kmVazio">KM vazio (opcional)</label>
+            <input id="kmVazio" type="text" inputmode="decimal" placeholder="Ex: 4" autocomplete="off">
+            <div class="help">Distância sem ganhar (volta ao centro/casa)</div>
+            <div class="err" id="kmVazioErr"></div>
+          </div>
+        </div>
+        <div class="row">
+          <div class="field">
+            <label for="consumo">Consumo do carro (km/L)</label>
+            <input id="consumo" type="text" inputmode="decimal" placeholder="Ex: 12" autocomplete="off">
+            <div class="help">Ex: 12 km por litro. Digite 12 (não 0,12).</div>
+            <div class="err" id="consumoErr"></div>
+          </div>
+          <div class="field">
+            <label for="preco">Preço do combustível (R$/L)</label>
+            <input id="preco" type="text" inputmode="decimal" placeholder="Ex: 5,89" autocomplete="off">
+            <div class="err" id="precoErr"></div>
+          </div>
+        </div>
+        <div class="actions">
+          <button type="button" id="calcular" class="btn btn-primary">CALCULAR</button>
+          <button type="button" id="limpar" class="btn btn-secondary">LIMPAR</button>
+        </div>
+      </form>
+      <div id="resultado" class="result" aria-live="polite">
+        <div class="result-header">
+          <div class="big" id="lucroTitulo">💰 R$ 0,00</div>
+          <span id="classificacao" class="badge">—</span>
+        </div>
+        <div class="grid">
+          <div class="metric">
+            <div class="label">R$/KM</div>
+            <div class="value neu" id="rsKm">R$ 0,00</div>
+          </div>
+          <div class="metric">
+            <div class="label">Custo combustível</div>
+            <div class="value neu" id="custo">R$ 0,00</div>
+          </div>
+          <div class="metric">
+            <div class="label">KM total</div>
+            <div class="value neu" id="kmTotal">0 km</div>
+          </div>
+          <div class="metric">
+            <div class="label">Litros usados</div>
+            <div class="value neu" id="litros">0 L</div>
+          </div>
+        </div>
+        <div class="alerts" id="alerts"></div>
+        <div class="share">
+          <button type="button" id="shareBtn" class="btn btn-tertiary" disabled>Compartilhar</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <script>
+    const el = (id)=>document.getElementById(id);
+    const nf = new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL',minimumFractionDigits:2});
+    const n2 = (v)=>Number.isFinite(v)?v.toFixed(2).replace('.',','):'0,00';
+    const parseNum = (v)=> {
+      if(typeof v!=='string') return NaN;
+      v = v.trim();
+      if(v==='') return NaN;
+      // mantém apenas dígitos, vírgula, ponto e sinal
+      v = v.replace(/[^\d,.\-]/g,'');
+      if(v.includes(',') && v.includes('.')){
+        // assume vírgula como decimal e ponto como milhar
+        v = v.replace(/\./g,'').replace(',','.');
+      }else if(v.includes(',')){
+        v = v.replace(',','.');
+      }
+      // normaliza múltiplos sinais
+      v = v.replace(/(.*)-(.*)/,'-$2');
+      const n = Number(v);
+      return Number.isFinite(n)?n:NaN;
+    }
+    const valor=el('valor');
+    const km=el('km');
+    const kmVazio=el('kmVazio');
+    const consumo=el('consumo');
+    const preco=el('preco');
+    const calcular=el('calcular');
+    const limpar=el('limpar');
+    const resultado=el('resultado');
+    const lucroTitulo=el('lucroTitulo');
+    const classificacao=el('classificacao');
+    const rsKm=el('rsKm');
+    const custo=el('custo');
+    const kmTotal=el('kmTotal');
+    const litros=el('litros');
+    const alerts=el('alerts');
+    const shareBtn=el('shareBtn');
+    let last=null;
+    const errs = {
+      valor: el('valorErr'),
+      km: el('kmErr'),
+      kmVazio: el('kmVazioErr'),
+      consumo: el('consumoErr'),
+      preco: el('precoErr')
+    };
+    function setErr(key,msg){
+      const e = errs[key];
+      if(!e) return;
+      if(msg){ e.textContent = msg; e.classList.add('show');}
+      else { e.textContent=''; e.classList.remove('show');}
+    }
+
+    function classify(v){
+      if(v>=2.0) return {k:'ok',t:'🔥 ÓTIMA'};
+      if(v>=1.5) return {k:'good',t:'👍 BOA'};
+      if(v>=1.2) return {k:'warn',t:'⚠️ FRACA'};
+      return {k:'bad',t:'💀 PREJUÍZO'};
+    }
+
+    function validInputs(){ // validação com mensagens
+      const a=parseNum(valor.value);
+      const b=parseNum(km.value);
+      const d=parseNum(consumo.value);
+      const e=parseNum(preco.value);
+      let ok=true;
+      setErr('valor', !Number.isFinite(a)||a<=0 ? 'Informe o valor recebido (ex.: 35,90).' : '');
+      setErr('km', !Number.isFinite(b)||b<=0 ? 'Informe o KM rodado (ex.: 18,5).' : '');
+      if(!Number.isFinite(d)||d<=0){ setErr('consumo','Informe o consumo em km/L (ex.: 12).'); ok=false; }
+      else if(d<=1){ setErr('consumo','Consumo muito baixo. Digite 12 (não 0,12).'); ok=false; }
+      else if(d<3||d>30){ setErr('consumo','Consumo fora do comum (3–30 km/L). Verifique.'); }
+      else setErr('consumo','');
+      if(!Number.isFinite(e)||e<=0){ setErr('preco','Informe o preço do combustível (ex.: 5,89).'); ok=false; }
+      else if(e<3||e>15){ setErr('preco','Preço fora do comum (R$ 3–15). Verifique.'); }
+      else setErr('preco','');
+      return ok && Number.isFinite(a)&&a>0&&Number.isFinite(b)&&b>0&&Number.isFinite(d)&&d>0&&Number.isFinite(e)&&e>0;
+    }
+
+    function compute(){
+      if(!validInputs()){
+        resultado.classList.remove('show');
+        resultado.style.display='none';
+        return;
+      }
+      const v=parseNum(valor.value);
+      const k=parseNum(km.value);
+      const kv=isNaN(parseNum(kmVazio.value))?0:parseNum(kmVazio.value);
+      const cons=parseNum(consumo.value);
+      const p=parseNum(preco.value);
+      // guarda de sanidade: evita consumo <= 0.5 (erro comum 0,12)
+      if(cons<=0.5){
+        setErr('consumo','Consumo inválido. Use 12, 10, 14... (km por litro).');
+        resultado.classList.remove('show');
+        resultado.style.display='none';
+        return;
+      }
+      const kTotal=k+kv;
+      const l=kTotal/cons;
+      const c=l*p;
+      const lucro=v-c;
+      const rskm = kTotal>0 ? lucro/kTotal : 0;
+      const pctComb = v>0 ? c/v : 0;
+      lucroTitulo.textContent = (lucro>=0?'💰 ':'💸 ')+nf.format(lucro);
+      lucroTitulo.className='big';
+      rsKm.textContent = nf.format(rskm);
+      rsKm.className = 'value '+(rskm>=1.2?'pos':(rskm<1.2?'neg':'neu'));
+      custo.textContent = nf.format(c);
+      custo.className='value '+(c>v?'neg':'neu');
+      kmTotal.textContent = n2(kTotal).replace(',00','')+' km';
+      litros.textContent = n2(l).replace(',00','')+' L';
+      last = {lucro, rskm, c, kTotal, l};
+      const cl=classify(rskm);
+      classificacao.textContent=cl.t;
+      classificacao.className='badge '+cl.k;
+      alerts.innerHTML='';
+      if(kv>0){
+        const a=document.createElement('div');
+        a.className='alert';
+        a.innerHTML='📍 Você rodou <strong>'+n2(kv).replace(',00','')+' km</strong> sem ganhar';
+        alerts.appendChild(a);
+      }
+      if(pctComb>0.30){
+        const a=document.createElement('div');
+        a.className='alert';
+        a.innerHTML='⛽ Alto gasto com combustível: <strong>'+Math.round(pctComb*100)+'%</strong> do valor';
+        alerts.appendChild(a);
+      }
+      resultado.style.display='block';
+      requestAnimationFrame(()=>resultado.classList.add('show'));
+      resultado.scrollIntoView({behavior:'smooth',block:'nearest'});
+      shareBtn.disabled=false;
+    }
+
+    calcular.addEventListener('click', compute);
+    limpar.addEventListener('click', ()=>{
+      valor.value=''; km.value=''; kmVazio.value=''; consumo.value=''; preco.value='';
+      resultado.classList.remove('show'); resultado.style.display='none'; alerts.innerHTML='';
+      shareBtn.disabled=true; last=null;
+      valor.focus();
+    });
+    [valor,km,kmVazio,consumo,preco].forEach(i=>{
+      i.addEventListener('keydown',e=>{
+        if(e.key==='Enter'){ e.preventDefault(); compute(); }
+      });
+    });
+    shareBtn.addEventListener('click', async ()=>{
+      if(!last) return;
+      const txt = [
+        'Calculadora de Lucro por Corrida',
+        'Lucro: '+nf.format(last.lucro),
+        'R$/KM: '+nf.format(last.rskm),
+        'Custo: '+nf.format(last.c),
+        'KM total: '+last.kTotal.toFixed(2).replace('.',',')
+      ].join('\\n');
+      const url = location.href;
+      try{
+        if(navigator.share){
+          await navigator.share({title:'Lucro da corrida', text:txt, url});
+        }else{
+          const wurl='https://wa.me/?text='+encodeURIComponent(txt+'\\n'+url);
+          window.open(wurl,'_blank');
+        }
+      }catch(_){}
+    });
+  </script>
+</body>
+</html>
