@@ -38,39 +38,44 @@
       -webkit-font-smoothing:antialiased;
       -moz-osx-font-smoothing:grayscale;
       display:block;
+      height:100dvh;
+      min-height:100dvh;
+      overflow:hidden;
     }
     .wrap{
       width:100%;
       max-width:var(--maxw);
-      min-height:100svh;
-      min-height:100dvh;
+      height:100%;
       display:grid;
+      grid-template-rows: 1fr;
       place-items:center;
-      padding:env(safe-area-inset-top) 12px env(safe-area-inset-bottom) 12px;
+      padding:0 12px calc(env(safe-area-inset-bottom) + 8px) 12px;
     }
     .card{
       background:var(--card);
       border-radius:var(--radius);
       box-shadow:var(--shadow);
       width:100%;
-      padding:18px;
+      padding:16px;
+      max-height:100%;
+      overflow:auto;
       backdrop-filter:saturate(120%) blur(6px);
     }
     h1{
-      font-size:clamp(20px,4.8vw,26px);
-      margin:0 0 14px;
+      font-size:clamp(18px,4.6vw,24px);
+      margin:2px 0 10px;
       line-height:1.2;
       text-align:center;
     }
     .subtitle{
       text-align:center;
       color:var(--muted);
-      font-size:14px;
-      margin-bottom:18px;
+      font-size:13px;
+      margin-bottom:12px;
     }
     form{
       display:grid;
-      gap:var(--gap);
+      gap:12px;
     }
     .field{
       display:flex;
@@ -110,8 +115,8 @@
     }
     .actions{
       display:flex;
-      gap:var(--gap);
-      margin-top:var(--gap-lg);
+      gap:12px;
+      margin-top:12px;
     }
     .btn{
       flex:1;
@@ -176,8 +181,8 @@
     .grid{
       display:grid;
       grid-template-columns:1fr 1fr;
-      gap:var(--gap);
-      margin-top:14px;
+      gap:12px;
+      margin-top:12px;
     }
     .metric{
       background:#0b162d;
@@ -198,7 +203,7 @@
     .value.neg{color:var(--red)}
     .value.neu{color:var(--text)}
     .alerts{
-      margin-top:14px;
+      margin-top:12px;
       display:grid;
       gap:8px;
     }
@@ -239,9 +244,17 @@
       .btn-primary:hover{filter:brightness(1.06)}
       .btn-secondary:hover{opacity:.9}
     }
+    @media (max-height:680px){
+      .help{display:none}
+      .btn{padding:12px 14px; font-size:15px}
+      .metric .value{font-size:15px}
+      .subtitle{margin-bottom:8px}
+      .card{padding:12px}
+      form{gap:10px}
+    }
     @media (min-width:740px){
       .wrap{padding:24px}
-      .card{padding:24px}
+      .card{padding:22px}
     }
   </style>
 </head>
