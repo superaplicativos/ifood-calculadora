@@ -121,6 +121,15 @@
     const nf = new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL'});
     const n2 = (v)=>Number.isFinite(v)?v.toFixed(2):'0.00';
     const parse = (v)=>{ if(typeof v!=='string') return NaN; v=v.trim().replace(/[^\d,.\-]/g,''); if(v.includes(',')&&v.includes('.')) v=v.replace(/\./g,'').replace(',', '.'); else if(v.includes(',')) v=v.replace(',','.'); return Number(v) }
+    const DEFAULT_FB_CFG = {
+      apiKey: "AIzaSyBsPbnJneR2Rit9_dCgHOpQRQukGXtvQDs",
+      authDomain: "ifood-c8d51.firebaseapp.com",
+      projectId: "ifood-c8d51",
+      storageBucket: "ifood-c8d51.firebasestorage.app",
+      messagingSenderId: "224606899032",
+      appId: "1:224606899032:web:6bb5327d7b560fa380b32d",
+      measurementId: "G-SK0Q5ZT7V2"
+    };
     const cfgBtn = $('cfgBtn'), authBtn=$('authBtn'), userState=$('userState');
     const modalCfg=$('modalCfg'), saveCfg=$('saveCfg'), cancelCfg=$('cancelCfg'), cfgText=$('cfgText');
     const modalForm=$('modalForm'), formTitle=$('formTitle'), saveForm=$('saveForm'), cancelForm=$('cancelForm');
@@ -134,8 +143,53 @@
     cfgBtn.onclick=openCfg; cancelCfg.onclick=closeCfg;
     saveCfg.onclick=()=>{ try{ const o=JSON.parse(cfgText.value); localStorage.setItem('fbCfg', JSON.stringify(o)); location.reload() }catch{} }
     function demoSeed(){ if(!localStorage.getItem('premiumDemo')){ const today=new Date(); const base=[]; for(let i=0;i<14;i++){ const d=new Date(today); d.setDate(d.getDate()-i); base.push({data:d,valor:30+Math.random()*25,km:10+Math.random()*10,kmVazio:Math.random()*4}) } localStorage.setItem('premiumDemo', JSON.stringify(base)) } const arr=JSON.parse(localStorage.getItem('premiumDemo')||'[]'); data.corridas = arr.map(x=>({...x, data:new Date(x.data)})) }
-    function hasFirebase(){ return !!localStorage.getItem('fbCfg') }
-    async function initFb(){ if(!hasFirebase()) return; const cfg=JSON.parse(localStorage.getItem('fbCfg')); const { initializeApp } = await import('https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js'); const { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut } = await import('https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js'); const { getFirestore, collection, addDoc, getDocs, query, where, orderBy, Timestamp } = await import('https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js'); app = initializeApp(cfg); auth = getAuth(app); provider = new GoogleAuthProvider(); db = getFirestore(app); authBtn.onclick=async()=>{ if(auth.currentUser){ await signOut(auth); }else{ await signInWithPopup(auth, provider) } }; onAuthStateChanged(auth, async u=>{ user=u||null; userState.textContent = user ? (user.displayName||'Usuário') : 'Modo demo'; authBtn.textContent = user ? 'Sair' : 'Entrar'; if(user){ await loadFromFirestore() } else { demoSeed(); renderAll() } }); window.addEventListener('beforeunload',()=>{}); async function loadFromFirestore(){ try{ const uid=auth.currentUser.uid; const { collection, getDocs, query, where } = await import('https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js'); const corrRef = collection(db,'users',uid,'corridas'); const snap = await getDocs(corrRef); data.corridas = snap.docs.map(d=>({id:d.id,...d.data(), data: d.data().data? d.data().data.toDate(): new Date()})); const abRef = collection(db,'users',uid,'abastecimentos'); const asnap = await getDocs(abRef); data.abastecimentos = asnap.docs.map(d=>({id:d.id,...d.data(), data: d.data().data? d.data().data.toDate(): new Date()})); renderAll() }catch{ demoSeed(); renderAll() } } }
+    function hasFirebase(){ return !!localStorage.getItem('fbCfg') || !!DEFAULT_FB_CFG }
+    async function initFb(){
+      if(!hasFirebase()) return;
+      const cfg = localStorage.getItem('fbCfg') ? JSON.parse(localStorage.getItem('fbCfg')) : DEFAULT_FB_CFG;
+      const { initializeApp } = await import('https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js');
+      const { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut } = await import('https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js');
+      const { getFirestore, collection, addDoc, getDocs } = await import('https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js');
+      app = initializeApp(cfg);
+      try{
+        if(cfg.measurementId){
+          const { getAnalytics } = await import('https://www.gstatic.com/firebasejs/10.12.2/firebase-analytics.js');
+          try{ getAnalytics(app) }catch(_){}
+        }
+      }catch(_){}
+      auth = getAuth(app);
+      provider = new GoogleAuthProvider();
+      db = getFirestore(app);
+      authBtn.onclick=async()=>{
+        try{
+          if(auth.currentUser){ await signOut(auth) }
+          else { await signInWithPopup(auth, provider) }
+        }catch(err){
+          alert('Erro de login: '+(err?.code||err?.message||'verifique o console')+'\nDica: adicione superaplicativos.github.io em Authentication → Settings → Authorized domains.');
+        }
+      };
+      onAuthStateChanged(auth, async u=>{
+        user=u||null;
+        userState.textContent = user ? (user.displayName||'Usuário') : 'Modo demo';
+        authBtn.textContent = user ? 'Sair' : 'Entrar';
+        if(user){ await loadFromFirestore() } else { demoSeed(); renderAll() }
+      });
+      window.addEventListener('beforeunload',()=>{});
+      async function loadFromFirestore(){
+        try{
+          const uid=auth.currentUser.uid;
+          const corrRef = collection(db,'users',uid,'corridas');
+          const snap = await getDocs(corrRef);
+          data.corridas = snap.docs.map(d=>({id:d.id,...d.data(), data: d.data().data? d.data().data.toDate(): new Date()}));
+          const abRef = collection(db,'users',uid,'abastecimentos');
+          const asnap = await getDocs(abRef);
+          data.abastecimentos = asnap.docs.map(d=>({id:d.id,...d.data(), data: d.data().data? d.data().data.toDate(): new Date()}));
+          renderAll()
+        }catch{
+          demoSeed(); renderAll()
+        }
+      }
+    }
     function ensureCharts(){ const ctx1=$('chartFat').getContext('2d'); const ctx2=$('chartLucro').getContext('2d'); const ctx3=$('chartKm').getContext('2d'); if(!charts.fat){ charts.fat = new Chart(ctx1,{type:'line',data:{labels:[],datasets:[{label:'Faturamento',data:[],borderColor:'#3b82f6',backgroundColor:'rgba(59,130,246,.3)'}]},options:{responsive:true,maintainAspectRatio:false}})} if(!charts.lucro){ charts.lucro = new Chart(ctx2,{type:'bar',data:{labels:[],datasets:[{label:'Lucro',data:[],backgroundColor:'rgba(34,197,94,.6)'}]},options:{responsive:true,maintainAspectRatio:false}})} if(!charts.km){ charts.km = new Chart(ctx3,{type:'doughnut',data:{labels:['Produtivo','Vazio'],datasets:[{data:[1,1],backgroundColor:['#22c55e','#facc15']}]},options:{responsive:true,maintainAspectRatio:false}})} }
     function monthRange(){ const m = monthPicker.value ? new Date(monthPicker.value+'-01') : new Date(); const start = new Date(m.getFullYear(), m.getMonth(), 1); const end = new Date(m.getFullYear(), m.getMonth()+1, 1); return {start,end} }
     function calc(){ const {start,end}=monthRange(); const corr = data.corridas.filter(x=>{ const d=new Date(x.data); return d>=start && d<end }); const consumo = data.consumoPadrao; const preco = data.precoCombustivel; let fat=0, km=0, kz=0, custo=0; corr.forEach(x=>{ const k = Number(x.km)||0; const kv = Number(x.kmVazio)||0; const val = Number(x.valor)||0; const kt = k+kv; const l = kt/consumo; const c = l*preco; fat+=val; km+=kt; kz+=kv; custo+=c; }); const lucro = fat - custo; const rskm = km>0 ? lucro/km : 0; return {fat, km, kz, custo, lucro, rskm, series:corr.map(x=>({d:new Date(x.data), v:Number(x.valor)||0, k:(Number(x.km)||0)+(Number(x.kmVazio)||0), val:Number(x.valor)||0}))} }
@@ -152,4 +206,3 @@
   </script>
 </body>
 </html>
-
