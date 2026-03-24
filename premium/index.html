@@ -1,0 +1,155 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#0f172a">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
+  <title>Premium • Controle Financeiro</title>
+  <link rel="icon" href="../LOGO.png">
+  <style>
+    :root{--bg:#0f172a;--card:#1e293b;--text:#e2e8f0;--muted:#94a3b8;--blue:#3b82f6;--blue-pressed:#2563eb;--green:#22c55e;--yellow:#facc15;--red:#ef4444;--shadow:0 10px 30px rgba(0,0,0,.35);--radius:16px;--radius-sm:12px}
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{margin:0;font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,Noto Sans,Helvetica Neue,Arial;background:linear-gradient(180deg,#0f172a 0%,#0b1223 100%);color:var(--text);-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;display:block;height:100dvh;min-height:100dvh;overflow:hidden}
+    .wrap{width:100%;max-width:720px;height:100%;display:grid;grid-template-rows:1fr;place-items:center;padding:0 12px calc(env(safe-area-inset-bottom) + 8px) 12px}
+    .card{background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);width:100%;padding:16px;max-height:100%;overflow:auto;backdrop-filter:saturate(120%) blur(6px)}
+    .logo{display:flex;align-items:center;justify-content:center;margin:2px 0 6px}
+    .logo img{width:clamp(64px,20vw,96px);height:auto;display:block;border-radius:12px;box-shadow:0 6px 20px rgba(0,0,0,.35)}
+    h1{font-size:clamp(18px,4.4vw,24px);margin:2px 0 4px;text-align:center}
+    .subtitle{text-align:center;color:var(--muted);font-size:13px;margin-bottom:10px}
+    .topbar{display:flex;gap:8px;justify-content:space-between;align-items:center;margin-bottom:10px}
+    .user{display:flex;gap:8px;align-items:center;color:var(--muted);font-size:13px}
+    .user .name{color:#fff;font-weight:700}
+    .btn{border:none;border-radius:12px;padding:10px 14px;background:linear-gradient(180deg,var(--blue),var(--blue-pressed));color:#fff;font-weight:700;cursor:pointer}
+    .btn.secondary{background:#0b162d;color:var(--text);border:1px solid rgba(148,163,184,.25)}
+    .row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+    .select{background:#0b162d;color:var(--text);border:1px solid rgba(148,163,184,.25);border-radius:12px;padding:10px 12px;width:100%}
+    .grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+    .kpi{background:#0b162d;border:1px solid rgba(148,163,184,.25);border-radius:12px;padding:12px}
+    .kpi .label{font-size:12px;color:var(--muted)}
+    .kpi .value{font-size:18px;font-weight:800}
+    .charts{margin-top:12px;display:grid;gap:12px}
+    .actions{display:flex;gap:10px;margin-top:12px}
+    .modal{position:fixed;inset:0;background:rgba(0,0,0,.6);display:none;align-items:center;justify-content:center;padding:16px}
+    .modal.show{display:flex}
+    .modal .box{background:var(--card);border-radius:16px;padding:16px;width:min(520px,96vw)}
+    .modal .box h3{margin:0 0 8px}
+    .modal .box textarea{width:100%;min-height:140px;border-radius:12px;background:#0b162d;border:1px solid rgba(148,163,184,.25);color:var(--text);padding:10px}
+    @media (max-height:680px){.subtitle{display:none}.card{padding:12px}}
+    @media (min-width:820px){.grid{grid-template-columns:repeat(3,1fr)}}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="card">
+      <div class="logo"><img src="../LOGO.png" alt="Premium"></div>
+      <h1>Painel Premium</h1>
+      <div class="subtitle">Controle mensal com gráficos e análises</div>
+      <div class="topbar">
+        <div class="user"><span id="userState">Modo demo</span></div>
+        <div class="actions">
+          <button class="btn secondary" id="cfgBtn">Configurar Firebase</button>
+          <button class="btn" id="authBtn">Entrar</button>
+        </div>
+      </div>
+      <div class="row">
+        <select id="period" class="select">
+          <option value="mes">Mês atual</option>
+          <option value="semana">Semana</option>
+          <option value="hoje">Hoje</option>
+        </select>
+        <input id="monthPicker" class="select" type="month">
+      </div>
+      <div class="grid" style="margin-top:10px">
+        <div class="kpi"><div class="label">Lucro</div><div class="value" id="kpiLucro">R$ 0,00</div></div>
+        <div class="kpi"><div class="label">Faturamento</div><div class="value" id="kpiFat">R$ 0,00</div></div>
+        <div class="kpi"><div class="label">Custo combustível</div><div class="value" id="kpiCusto">R$ 0,00</div></div>
+        <div class="kpi"><div class="label">KM total</div><div class="value" id="kpiKm">0 km</div></div>
+        <div class="kpi"><div class="label">KM vazio</div><div class="value" id="kpiVazio">0 km</div></div>
+        <div class="kpi"><div class="label">R$/KM médio</div><div class="value" id="kpiRskm">R$ 0,00</div></div>
+      </div>
+      <div class="charts">
+        <canvas id="chartFat" height="140"></canvas>
+        <canvas id="chartLucro" height="140"></canvas>
+        <canvas id="chartKm" height="140"></canvas>
+      </div>
+      <div class="actions">
+        <button class="btn" id="novaCorrida">Nova corrida</button>
+        <button class="btn secondary" id="novoAbast">Abastecimento</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal" id="modalCfg">
+    <div class="box">
+      <h3>Configurar Firebase</h3>
+      <div class="subtitle">Cole o objeto de configuração do Firebase</div>
+      <textarea id="cfgText" placeholder='{"apiKey":"...","authDomain":"...","projectId":"..."}'></textarea>
+      <div class="actions" style="margin-top:10px">
+        <button class="btn secondary" id="cancelCfg">Cancelar</button>
+        <button class="btn" id="saveCfg">Salvar</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal" id="modalForm">
+    <div class="box">
+      <h3 id="formTitle">Nova corrida</h3>
+      <div class="row" style="margin-bottom:10px">
+        <input id="fValor" class="select" placeholder="Valor (R$)" inputmode="decimal">
+        <input id="fKm" class="select" placeholder="KM" inputmode="decimal">
+      </div>
+      <div class="row">
+        <input id="fVazio" class="select" placeholder="KM vazio" inputmode="decimal">
+        <input id="fLitros" class="select" placeholder="Litros (abastec.)" inputmode="decimal">
+      </div>
+      <div class="actions" style="margin-top:10px">
+        <button class="btn secondary" id="cancelForm">Cancelar</button>
+        <button class="btn" id="saveForm">Salvar</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <script type="module">
+    const $ = (id)=>document.getElementById(id);
+    const nf = new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL'});
+    const n2 = (v)=>Number.isFinite(v)?v.toFixed(2):'0.00';
+    const parse = (v)=>{ if(typeof v!=='string') return NaN; v=v.trim().replace(/[^\d,.\-]/g,''); if(v.includes(',')&&v.includes('.')) v=v.replace(/\./g,'').replace(',', '.'); else if(v.includes(',')) v=v.replace(',','.'); return Number(v) }
+    const cfgBtn = $('cfgBtn'), authBtn=$('authBtn'), userState=$('userState');
+    const modalCfg=$('modalCfg'), saveCfg=$('saveCfg'), cancelCfg=$('cancelCfg'), cfgText=$('cfgText');
+    const modalForm=$('modalForm'), formTitle=$('formTitle'), saveForm=$('saveForm'), cancelForm=$('cancelForm');
+    const novaCorrida=$('novaCorrida'), novoAbast=$('novoAbast');
+    const kpiLucro=$('kpiLucro'), kpiFat=$('kpiFat'), kpiCusto=$('kpiCusto'), kpiKm=$('kpiKm'), kpiVazio=$('kpiVazio'), kpiRskm=$('kpiRskm');
+    const period=$('period'), monthPicker=$('monthPicker');
+    let app=null, auth=null, db=null, user=null, provider=null, charts={};
+    let data={corridas:[], abastecimentos:[], consumoPadrao:12, precoCombustivel:6};
+    function openCfg(){ modalCfg.classList.add('show') }
+    function closeCfg(){ modalCfg.classList.remove('show') }
+    cfgBtn.onclick=openCfg; cancelCfg.onclick=closeCfg;
+    saveCfg.onclick=()=>{ try{ const o=JSON.parse(cfgText.value); localStorage.setItem('fbCfg', JSON.stringify(o)); location.reload() }catch{} }
+    function demoSeed(){ if(!localStorage.getItem('premiumDemo')){ const today=new Date(); const base=[]; for(let i=0;i<14;i++){ const d=new Date(today); d.setDate(d.getDate()-i); base.push({data:d,valor:30+Math.random()*25,km:10+Math.random()*10,kmVazio:Math.random()*4}) } localStorage.setItem('premiumDemo', JSON.stringify(base)) } const arr=JSON.parse(localStorage.getItem('premiumDemo')||'[]'); data.corridas = arr.map(x=>({...x, data:new Date(x.data)})) }
+    function hasFirebase(){ return !!localStorage.getItem('fbCfg') }
+    async function initFb(){ if(!hasFirebase()) return; const cfg=JSON.parse(localStorage.getItem('fbCfg')); const { initializeApp } = await import('https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js'); const { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut } = await import('https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js'); const { getFirestore, collection, addDoc, getDocs, query, where, orderBy, Timestamp } = await import('https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js'); app = initializeApp(cfg); auth = getAuth(app); provider = new GoogleAuthProvider(); db = getFirestore(app); authBtn.onclick=async()=>{ if(auth.currentUser){ await signOut(auth); }else{ await signInWithPopup(auth, provider) } }; onAuthStateChanged(auth, async u=>{ user=u||null; userState.textContent = user ? (user.displayName||'Usuário') : 'Modo demo'; authBtn.textContent = user ? 'Sair' : 'Entrar'; if(user){ await loadFromFirestore() } else { demoSeed(); renderAll() } }); window.addEventListener('beforeunload',()=>{}); async function loadFromFirestore(){ try{ const uid=auth.currentUser.uid; const { collection, getDocs, query, where } = await import('https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js'); const corrRef = collection(db,'users',uid,'corridas'); const snap = await getDocs(corrRef); data.corridas = snap.docs.map(d=>({id:d.id,...d.data(), data: d.data().data? d.data().data.toDate(): new Date()})); const abRef = collection(db,'users',uid,'abastecimentos'); const asnap = await getDocs(abRef); data.abastecimentos = asnap.docs.map(d=>({id:d.id,...d.data(), data: d.data().data? d.data().data.toDate(): new Date()})); renderAll() }catch{ demoSeed(); renderAll() } } }
+    function ensureCharts(){ const ctx1=$('chartFat').getContext('2d'); const ctx2=$('chartLucro').getContext('2d'); const ctx3=$('chartKm').getContext('2d'); if(!charts.fat){ charts.fat = new Chart(ctx1,{type:'line',data:{labels:[],datasets:[{label:'Faturamento',data:[],borderColor:'#3b82f6',backgroundColor:'rgba(59,130,246,.3)'}]},options:{responsive:true,maintainAspectRatio:false}})} if(!charts.lucro){ charts.lucro = new Chart(ctx2,{type:'bar',data:{labels:[],datasets:[{label:'Lucro',data:[],backgroundColor:'rgba(34,197,94,.6)'}]},options:{responsive:true,maintainAspectRatio:false}})} if(!charts.km){ charts.km = new Chart(ctx3,{type:'doughnut',data:{labels:['Produtivo','Vazio'],datasets:[{data:[1,1],backgroundColor:['#22c55e','#facc15']}]},options:{responsive:true,maintainAspectRatio:false}})} }
+    function monthRange(){ const m = monthPicker.value ? new Date(monthPicker.value+'-01') : new Date(); const start = new Date(m.getFullYear(), m.getMonth(), 1); const end = new Date(m.getFullYear(), m.getMonth()+1, 1); return {start,end} }
+    function calc(){ const {start,end}=monthRange(); const corr = data.corridas.filter(x=>{ const d=new Date(x.data); return d>=start && d<end }); const consumo = data.consumoPadrao; const preco = data.precoCombustivel; let fat=0, km=0, kz=0, custo=0; corr.forEach(x=>{ const k = Number(x.km)||0; const kv = Number(x.kmVazio)||0; const val = Number(x.valor)||0; const kt = k+kv; const l = kt/consumo; const c = l*preco; fat+=val; km+=kt; kz+=kv; custo+=c; }); const lucro = fat - custo; const rskm = km>0 ? lucro/km : 0; return {fat, km, kz, custo, lucro, rskm, series:corr.map(x=>({d:new Date(x.data), v:Number(x.valor)||0, k:(Number(x.km)||0)+(Number(x.kmVazio)||0), val:Number(x.valor)||0}))} }
+    function renderKPIs(m){ kpiLucro.textContent=nf.format(m.lucro); kpiFat.textContent=nf.format(m.fat); kpiCusto.textContent=nf.format(m.custo); kpiKm.textContent=n2(m.km).replace('.',',')+' km'; kpiVazio.textContent=n2(m.kz).replace('.',',')+' km'; kpiRskm.textContent=nf.format(m.rskm) }
+    function renderCharts(m){ ensureCharts(); const byDay={}; m.series.forEach(s=>{ const k=s.d.toISOString().slice(0,10); if(!byDay[k]) byDay[k]={fat:0,lucro:0}; const cons=data.consumoPadrao, preco=data.precoCombustivel; const l=(s.k)/cons; const c=l*preco; byDay[k].fat+=s.val; byDay[k].lucro+=s.val-c }); const labels=Object.keys(byDay).sort(); const fat=labels.map(k=>byDay[k].fat); const luc=labels.map(k=>byDay[k].lucro); charts.fat.data.labels=labels; charts.fat.data.datasets[0].data=fat; charts.fat.update(); charts.lucro.data.labels=labels; charts.lucro.data.datasets[0].data=luc; charts.lucro.update(); const produtivo = Math.max(m.km-m.kz,0); charts.km.data.datasets[0].data=[produtivo,m.kz]; charts.km.update() }
+    function renderAll(){ const m=calc(); renderKPIs(m); renderCharts(m) }
+    function openForm(type){ modalForm.classList.add('show'); formTitle.textContent = type==='corrida'?'Nova corrida':'Abastecimento'; $('fValor').value=''; $('fKm').value=''; $('fVazio').value=''; $('fLitros').value=''; saveForm.onclick=async()=>{ if(type==='corrida'){ const v=parse($('fValor').value); const k=parse($('fKm').value); const kv=parse($('fVazio').value)||0; if(Number.isFinite(v)&&Number.isFinite(k)){ data.corridas.push({valor:v,km:k,kmVazio:kv,data:new Date()}); try{ if(db && user){ const { addDoc, collection, Timestamp } = await import('https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js'); await addDoc(collection(db,'users',user.uid,'corridas'),{valor:v,km:k,kmVazio:kv,data:new Date()}) } }catch{} } }else{ const val=parse($('fValor').value); const lit=parse($('fLitros').value); if(Number.isFinite(val)&&Number.isFinite(lit)){ data.abastecimentos.push({valor:val,litros:lit,data:new Date()}); try{ if(db && user){ const { addDoc, collection } = await import('https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js'); await addDoc(collection(db,'users',user.uid,'abastecimentos'),{valor:val,litros:lit,data:new Date()}) } }catch{} } } modalForm.classList.remove('show'); localStorage.setItem('premiumDemo', JSON.stringify(data.corridas)); renderAll() } }
+    cancelForm.onclick=()=>modalForm.classList.remove('show');
+    novaCorrida.onclick=()=>openForm('corrida');
+    novoAbast.onclick=()=>openForm('abastec');
+    period.onchange=()=>renderAll();
+    monthPicker.value = new Date().toISOString().slice(0,7);
+    if(hasFirebase()){ initFb() } else { userState.textContent='Modo demo'; authBtn.textContent='Entrar'; authBtn.onclick=()=>openCfg(); demoSeed(); renderAll() }
+  </script>
+</body>
+</html>
+
